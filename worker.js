@@ -174,7 +174,7 @@ export default {
     // Dashboard
     if (url.pathname === '/') {
       return new Response(
-        '<meta http-equiv="refresh" content="0;url=https://tomekfalek-cyber.github.io/swingai-revolut/">',
+        '<meta http-equiv="refresh" content="0;url=https://tomekfalek-cyber.github.io/SwingRAI-bot/">',
         { headers: { 'Content-Type': 'text/html', ...corsHeaders() } }
       );
     }
