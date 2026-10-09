@@ -13,7 +13,7 @@ Cloudflare Worker z pełną logiką AI do handlu kryptowalutami na **Revolut X**
 
 ## Dashboard
 
-Otwarty w przeglądarce: [https://tomekfalek-cyber.github.io/swingai-revolut/](https://tomekfalek-cyber.github.io/swingai-revolut/)
+Otwarty w przeglądarce: [https://tomekfalek-cyber.github.io/SwingRAI-bot/](https://tomekfalek-cyber.github.io/SwingRAI-bot/)
 
 Folder `dashboard/index.html` — pełna wersja do GitHub Pages (połącz z własnym Worker URL w konfiguracji).
 
@@ -50,7 +50,7 @@ W Cloudflare Workers → Create Worker:
 ### 4. GitHub Pages (Dashboard)
 
 1. W ustawieniach repo: **Settings → Pages → Source: main branch / folder: /dashboard**
-2. Dashboard dostępny na: `https://tomekfalek-cyber.github.io/swingai-revolut/`
+2. Dashboard dostępny na: `https://tomekfalek-cyber.github.io/SwingRAI-bot/`
 
 ### 5. Konfiguracja Bota
 
