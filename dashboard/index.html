@@ -1232,6 +1232,37 @@ async function hmac(msg) {
   return Array.from(new Uint8Array(sig)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 function workerReady() { return !!(CFG.workerUrl && CFG.workerUrl.startsWith('https://')); }
+
+async function bybitKlines(sym,tf,limit){
+  limit=limit||200;
+  const pair=sym.replace('_','/').replace('/','');
+  const tfMap={'1d':'D','4h':'240','1h':'60','15m':'15','5m':'5'};
+  const itv=tfMap[tf]||'5';
+  const u='https://api.bybit.com/v5/market/kline?category=spot&symbol='+pair+'&interval='+itv+'&limit='+limit;
+  const r=await fetchWithTimeout(u,15000); const d=await r.json();
+  const list=(d&&d.result&&d.result.list)||[];
+  const rows=list.slice().reverse().map(function(k){return [Number(k[0]),Number(k[1]),Number(k[2]),Number(k[3]),Number(k[4]),Number(k[5])];});
+  if(!rows.length) throw new Error('Bybit: brak swiec '+pair);
+  return rows;
+}
+async function bybitTicker(sym){
+  const pair=sym.replace('_','/').replace('/','');
+  const r=await fetchWithTimeout('https://api.bybit.com/v5/market/tickers?category=spot&symbol='+pair,10000);
+  if(!r.ok) throw new Error('Bybit HTTP '+r.status);
+  const d=await r.json();
+  const t=(d&&d.result&&d.result.list&&d.result.list[0])||null;
+  if(!t) throw new Error('Bybit: brak danych '+pair);
+  const last=Number(t.lastPrice); const pct=Number(t.price24hPcnt)*100;
+  return {lastPrice:last, priceChangePercent:(isFinite(pct)?pct.toFixed(2):'0')};
+}
+async function getKlines(sym,tf,limit){
+  if (workerReady()) { try { return await getKlinesWorker(sym,tf,limit); } catch(e){ console.warn('worker klines -> Bybit direct:', e.message); } }
+  return bybitKlines(sym,tf,limit);
+}
+async function getTicker(sym){
+  if (workerReady()) { try { return await getTickerWorker(sym); } catch(e){ console.warn('worker ticker -> Bybit direct:', e.message); } }
+  return bybitTicker(sym);
+}
 function apiBase() { return workerReady() ? CFG.workerUrl.replace(/\/+$/,'')+'/proxy' : BASE; }
 
 async function signedReq(method, path, params={}) {
@@ -1302,7 +1333,7 @@ async function pub(path, params={}) {
   if (!r.ok) throw new Error(r.statusText);
   return r.json();
 }
-async function getKlines(sym,tf,limit){
+async function getKlinesWorker(sym,tf,limit){
   limit=limit||200;
   const kMap={'BTC_USDC':'XBTUSDT','ETH_USDC':'ETHUSDT','SOL_USDC':'SOLUSDT','XRP_USDC':'XRPUSDT','DOGE_USDC':'XDGUSDT','ADA_USDC':'ADAUSDT','AVAX_USDC':'AVAXUSDT','LINK_USDC':'LINKUSDT'};
   const kSym=kMap[sym]||(sym.replace('_',''));
@@ -1314,7 +1345,7 @@ async function getKlines(sym,tf,limit){
   const rows=key?d.result[key]:[];
   return rows.slice(-limit).map(function(k){return [+k[0]*1000,+k[1],+k[2],+k[3],+k[4],+k[6]];});
 }
-async function getTicker(sym){
+async function getTickerWorker(sym){
   const kMap={'BTC_USDC':'XBTUSDT','ETH_USDC':'ETHUSDT','SOL_USDC':'SOLUSDT','XRP_USDC':'XRPUSDT','DOGE_USDC':'XDGUSDT','ADA_USDC':'ADAUSDT','AVAX_USDC':'AVAXUSDT','LINK_USDC':'LINKUSDT'};
   const kSym=kMap[sym]||(sym.replace('_',''));
   const url='https://swingai-revolut.tomek-falek.workers.dev/market?path='+encodeURIComponent('/0/public/Ticker')+'&qs='+encodeURIComponent('pair='+kSym);
